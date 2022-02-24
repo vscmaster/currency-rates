@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Currency Rates</string>
+    <string name="cd_move_year_back">Move the year back</string>
+    <string name="cd_move_year_forward">Move the year forward</string>
+</resources>
