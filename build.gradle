@@ -6,6 +6,7 @@ buildscript {
     ext.accompanist_version = '0.23.0'
     ext.lifecycle_version = '2.4.1'
     ext.navigation_version = '2.4.1'
+    ext.ktor_version = '1.6.7'
 
     repositories {
         google()

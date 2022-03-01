@@ -1,9 +1,9 @@
 package com.vsh.coding.currencyrates.di
 
 import android.content.Context
-import com.vsh.coding.currencyrates.data.api.CurrencyApiBuilder
 import com.vsh.coding.currencyrates.data.CurrencyRatesRepository
 import com.vsh.coding.currencyrates.data.CurrencyRepository
+import com.vsh.coding.currencyrates.data.api.KtorCurrencyApiBuilder
 
 interface ReferencesLocator {
     val currencyRepository: CurrencyRepository
@@ -12,6 +12,7 @@ interface ReferencesLocator {
 class ReferenceLocatorImpl(private val applicationContext: Context) : ReferencesLocator {
 
     override val currencyRepository: CurrencyRepository by lazy {
-        CurrencyRatesRepository(CurrencyApiBuilder.apiService)
+        //CurrencyRatesRepository(RetrofitCurrencyApiBuilder.apiService)
+        CurrencyRatesRepository(KtorCurrencyApiBuilder.apiService)
     }
 }
