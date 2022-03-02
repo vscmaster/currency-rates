@@ -21,7 +21,9 @@ class CurrencyRatesRepository(private val currencyService: CurrencyService) : Cu
     override suspend fun getYearRates(date: Date): ApiResult<List<Rates>> {
 
         val ratesQueue = ConcurrentLinkedQueue<Rates>()
-        coroutineScope {
+        //val parallelScope = CoroutineScope(Job() + errorHandler)
+        val result = kotlin.runCatching {
+            //parallelScope.launch(SupervisorJob()) {
             val requestDate: Calendar = Calendar.getInstance().apply {
                 time = date
                 set(Calendar.DAY_OF_MONTH, 1)
@@ -30,28 +32,26 @@ class CurrencyRatesRepository(private val currencyService: CurrencyService) : Cu
             for (i in 0 until monthsCount) {
                 requestDate.set(Calendar.MONTH, i)
 
-                withContext(Dispatchers.IO + errorHandler) {
+                withContext(Dispatchers.IO) {
                     val dateFormatParameter = apiDateFormat.format(requestDate.time)
                     val dateString = dateFormatParameter + API_DATE_FORMAT_SUFFIX
                     delay((500L..1000L).random())
-                    val result: Result<Rates> =
-                        handleRequest { currencyService.getRatesOfDate(dateString) }
-                    ratesQueue.add(result.getOrNull())
+                    val result: Rates =
+                        currencyService.getRatesOfDate(dateString)
+                    ratesQueue.add(result)
                 }
             }
+        }
+
+        if (result.isFailure) {
+            Log.e("CurrencyRatesRepository", "unable to download rates", result.exceptionOrNull())
+            return ApiResult.Error(IllegalArgumentException("Rates not found"))
         }
 
         return if (ratesQueue.isEmpty()) {
             ApiResult.Error(IllegalArgumentException("Rates not found"))
         } else {
             ApiResult.Success(ratesQueue.toList())
-        }
-    }
-
-    private val errorHandler = CoroutineExceptionHandler { context, exception ->
-        run {
-            println("Caught $exception")
-            Log.e("CurrencyRatesRepository", "unable to download rates", exception)
         }
     }
 
@@ -64,13 +64,9 @@ class CurrencyRatesRepository(private val currencyService: CurrencyService) : Cu
         return if (rYear < cYear) 12 else cMonth + 1
     }
 
-    private suspend fun <T : Any> handleRequest(requestFunc: suspend () -> T): Result<T> {
-        return try {
-            Result.success(requestFunc.invoke())
-        } catch (he: HttpException) {
-            Log.e("CurrencyRatesRepository", "unable to download rates", he)
-            Result.failure(he)
-
+    /*val errorHandler = CoroutineExceptionHandler { context, exception ->
+        run {
+            Log.e("CurrencyRatesRepository", "unable to download rates", exception)
         }
-    }
+    }*/
 }

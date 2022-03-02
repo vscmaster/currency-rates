@@ -125,7 +125,7 @@ class CurrencyRatesViewModel(
                     is ApiResult.Error -> {
                         val errorMessages = it.errorMessages + ErrorMessage(
                             id = UUID.randomUUID().mostSignificantBits,
-                            messageId = -1//R.string.load_error
+                            messageId = R.string.load_error_check_connection
                         )
                         it.copy(errorMessages = errorMessages, isLoading = false)
                     }

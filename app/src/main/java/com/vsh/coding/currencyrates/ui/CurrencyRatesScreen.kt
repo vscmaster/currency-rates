@@ -50,7 +50,8 @@ fun CurrencyRateScreen(
         showTopAppBar = showTopAppBar,
         homeListLazyListState = homeListLazyListState,
         scaffoldState = scaffoldState,
-        modifier = modifier
+        modifier = modifier,
+        onRefresh = onYearChange
     ) { ratesUiState, contentModifier ->
         CurrenciesRatesTable(
             currenciesRates = ratesUiState.currenciesRates,
@@ -180,10 +181,11 @@ private fun CurrenciesRatesScreenWithList(
     homeListLazyListState: LazyListState,
     scaffoldState: ScaffoldState,
     modifier: Modifier = Modifier,
+    onRefresh: (date: Date) -> Unit,
     hasRatesContent: @Composable (
         uiState: CurrencyRatesUiState.Data,
         modifier: Modifier
-    ) -> Unit
+    ) -> Unit,
 ) {
     Scaffold(
         scaffoldState = scaffoldState,
@@ -209,7 +211,48 @@ private fun CurrenciesRatesScreenWithList(
                 when (uiState) {
                     is CurrencyRatesUiState.Data -> hasRatesContent(uiState, contentModifier)
                     is CurrencyRatesUiState.Empty -> {
+                        if (uiState.errorMessages.isNotEmpty()) {
+                            val errorMessage = remember(uiState) { uiState.errorMessages[0] }
 
+                            val errorMessageText: String = stringResource(errorMessage.messageId)
+                            val retryMessageText = stringResource(id = R.string.retry)
+
+                            //val onRefreshRatesState by rememberUpdatedState(onRefresh)
+                            //val onErrorDismissState by rememberUpdatedState(onErrorDismiss)
+
+                            //LaunchedEffect(errorMessageText, retryMessageText, scaffoldState) {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(text = errorMessageText)
+                                Button(
+                                    modifier = Modifier.padding(top = 16.dp),
+                                    onClick = { onRefresh(uiState.currentCurrencyRateDate) },
+                                    // Uses ButtonDefaults.ContentPadding by default
+                                    contentPadding = PaddingValues(
+                                        start = 20.dp,
+                                        top = 12.dp,
+                                        end = 20.dp,
+                                        bottom = 12.dp
+                                    )
+                                ) {
+                                    Text(text = retryMessageText)
+                                }
+                                //        }
+
+                                /*val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
+                                    message = errorMessageText,
+                                    actionLabel = retryMessageText
+                                )
+                                if (snackbarResult == SnackbarResult.ActionPerformed) {
+                                    onRefresh(Date())
+                                }*/
+
+                                //onErrorDismissState(errorMessage.id)
+                            }
+                        }
                     }
                 }
             }
