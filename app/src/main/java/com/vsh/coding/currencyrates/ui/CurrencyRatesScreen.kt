@@ -307,7 +307,7 @@ private fun RatesPagerList(
         }
         var pages = if (monthsRates.size < columnsPerPage) 1 else monthsRates.size / columnsPerPage
 
-        if (pages * columnsPerPage > monthsRates.size) {
+        if (pages * columnsPerPage < monthsRates.size) {
             pages++
         }
 
