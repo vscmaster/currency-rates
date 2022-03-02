@@ -33,6 +33,7 @@ import com.vsh.coding.currencyrates.R
 import com.vsh.coding.currencyrates.ui.model.CurrenciesRates
 import com.vsh.coding.currencyrates.ui.model.MonthRates
 import com.vsh.coding.currencyrates.utils.isScrolled
+import com.vsh.coding.currencyrates.utils.rateRowColor
 import java.util.*
 
 @OptIn(ExperimentalPagerApi::class)
@@ -84,18 +85,26 @@ fun CurrenciesRatesTable(
                     .width(40.dp)
             ) {
                 Box(modifier = Modifier.height(25.dp))
-                currenciesRates.currenciesIsoCodes.forEach { currencyCode ->
+                currenciesRates.currenciesIsoCodes.forEachIndexed { index, currencyCode ->
                     Text(
                         text = currencyCode,
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        fontWeight = FontWeight.Bold
-                    )
-                    Divider(
-                        color = Color.LightGray,
+                        textAlign = TextAlign.Center,
+                        color = if (index % 2 == 0) MaterialTheme.colors.onPrimary else Color.Unspecified,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .width(1.dp)
+                            .background(if (index % 2 == 0) MaterialTheme.colors.rateRowColor else Color.Transparent)
+                            .padding(vertical = 4.dp),
+                        fontWeight = FontWeight.Bold
                     )
+
+                    /*if (index != currenciesRates.currenciesIsoCodes.size - 1) {
+                        Divider(
+                            color = Color.LightGray,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .width(1.dp)
+                        )
+                    }*/
                 }
             }
             RatesPagerList(
@@ -212,51 +221,56 @@ private fun CurrenciesRatesScreenWithList(
                     is CurrencyRatesUiState.Data -> hasRatesContent(uiState, contentModifier)
                     is CurrencyRatesUiState.Empty -> {
                         if (uiState.errorMessages.isNotEmpty()) {
-                            val errorMessage = remember(uiState) { uiState.errorMessages[0] }
-
-                            val errorMessageText: String = stringResource(errorMessage.messageId)
-                            val retryMessageText = stringResource(id = R.string.retry)
-
-                            //val onRefreshRatesState by rememberUpdatedState(onRefresh)
-                            //val onErrorDismissState by rememberUpdatedState(onErrorDismiss)
-
-                            //LaunchedEffect(errorMessageText, retryMessageText, scaffoldState) {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(text = errorMessageText)
-                                Button(
-                                    modifier = Modifier.padding(top = 16.dp),
-                                    onClick = { onRefresh(uiState.currentCurrencyRateDate) },
-                                    // Uses ButtonDefaults.ContentPadding by default
-                                    contentPadding = PaddingValues(
-                                        start = 20.dp,
-                                        top = 12.dp,
-                                        end = 20.dp,
-                                        bottom = 12.dp
-                                    )
-                                ) {
-                                    Text(text = retryMessageText)
-                                }
-                                //        }
-
-                                /*val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
-                                    message = errorMessageText,
-                                    actionLabel = retryMessageText
-                                )
-                                if (snackbarResult == SnackbarResult.ActionPerformed) {
-                                    onRefresh(Date())
-                                }*/
-
-                                //onErrorDismissState(errorMessage.id)
-                            }
+                            RetryMessage(uiState, onRefresh)
                         }
                     }
                 }
             }
         )
+    }
+}
+
+@Composable
+fun RetryMessage(uiState: CurrencyRatesUiState, onRefresh: (date: Date) -> Unit) {
+    val errorMessage = remember(uiState) { uiState.errorMessages[0] }
+
+    val errorMessageText: String = stringResource(errorMessage.messageId)
+    val retryMessageText = stringResource(id = R.string.retry)
+
+    //val onRefreshRatesState by rememberUpdatedState(onRefresh)
+    //val onErrorDismissState by rememberUpdatedState(onErrorDismiss)
+
+    //LaunchedEffect(errorMessageText, retryMessageText, scaffoldState) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = errorMessageText)
+        Button(
+            modifier = Modifier.padding(top = 16.dp),
+            onClick = { onRefresh(uiState.currentCurrencyRateDate) },
+            // Uses ButtonDefaults.ContentPadding by default
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                top = 12.dp,
+                end = 20.dp,
+                bottom = 12.dp
+            )
+        ) {
+            Text(text = retryMessageText)
+        }
+        //        }
+
+        /*val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
+            message = errorMessageText,
+            actionLabel = retryMessageText
+        )
+        if (snackbarResult == SnackbarResult.ActionPerformed) {
+            onRefresh(Date())
+        }*/
+
+        //onErrorDismissState(errorMessage.id)
     }
 }
 
@@ -291,7 +305,11 @@ private fun RatesPagerList(
             Configuration.ORIENTATION_LANDSCAPE -> 6
             else -> 4
         }
-        val pages = if (monthsRates.size < columnsPerPage) 1 else monthsRates.size / columnsPerPage
+        var pages = if (monthsRates.size < columnsPerPage) 1 else monthsRates.size / columnsPerPage
+
+        if (pages * columnsPerPage > monthsRates.size) {
+            pages++
+        }
 
         HorizontalPager(count = pages, modifier = modifier) { page ->
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -301,21 +319,32 @@ private fun RatesPagerList(
                     val monthRate = monthsRates[monthRateIndex]
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
                     ) {
                         Text(
                             text = monthRate.monthName ?: "",
                             modifier = headerHeight,
                             fontWeight = FontWeight.Bold
                         )
-                        monthRate.rates.forEach { value ->
-                            Text(text = value, modifier = Modifier.padding(vertical = 4.dp))
-                            Divider(
-                                color = Color.LightGray,
+                        monthRate.rates.forEachIndexed { index, value ->
+                            Text(
+                                text = value,
+                                textAlign = TextAlign.Center,
+                                color = if (index % 2 == 0) MaterialTheme.colors.onPrimary else Color.Unspecified,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .width(1.dp)
+                                    .background(if (index % 2 == 0) MaterialTheme.colors.rateRowColor else Color.Transparent)
+                                    .padding(vertical = 4.dp)
                             )
+                            /*if (index != monthRate.rates.size - 1) {
+                                Divider(
+                                    color = Color.LightGray,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .width(1.dp)
+                                )
+                            }*/
                         }
                     }
                 }
