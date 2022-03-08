@@ -1,5 +1,6 @@
 package com.vsh.coding.currencyrates
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -12,6 +13,7 @@ import com.vsh.coding.currencyrates.ui.RatesRoute
 
 @Composable
 fun CurrencyRatesNavGraph(
+    context: Context,
     referencesLocator: ReferencesLocator,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
@@ -27,6 +29,7 @@ fun CurrencyRatesNavGraph(
                 factory = CurrencyRatesViewModel.provideFactory(referencesLocator.currencyRepository)
             )
             RatesRoute(
+                context = context,
                 currencyRatesViewModel = currencyRatesViewModel,
             )
         }

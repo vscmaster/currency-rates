@@ -1,5 +1,6 @@
 package com.vsh.coding.currencyrates.ui
 
+import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,23 +10,17 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.LocalWindowInsets
-import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.vsh.coding.currencyrates.CurrencyRatesUiState
@@ -39,6 +34,7 @@ import java.util.*
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun CurrencyRateScreen(
+    context: Context,
     uiState: CurrencyRatesUiState,
     showTopAppBar: Boolean,
     homeListLazyListState: LazyListState,
@@ -55,6 +51,7 @@ fun CurrencyRateScreen(
         onRefresh = onYearChange
     ) { ratesUiState, contentModifier ->
         CurrenciesRatesTable(
+            context = context,
             currenciesRates = ratesUiState.currenciesRates,
             modifier = contentModifier,
             currentCurrencyRateDate = ratesUiState.currentCurrencyRateDate,
@@ -66,6 +63,7 @@ fun CurrencyRateScreen(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun CurrenciesRatesTable(
+    context: Context,
     currenciesRates: CurrenciesRates,
     modifier: Modifier,
     currentCurrencyRateDate: Date,
@@ -74,7 +72,7 @@ fun CurrenciesRatesTable(
     val scrollState = rememberScrollState()
     val headerHeight = Modifier.height(25.dp)
     Column {
-        YearNavigation(currentCurrencyRateDate, onYearChange)
+        NavigationBar(context, currentCurrencyRateDate, onYearChange)
         Row(
             modifier = Modifier
                 .padding(start = 12.dp, end = 12.dp, top = 12.dp)
@@ -96,15 +94,6 @@ fun CurrenciesRatesTable(
                             .padding(vertical = 4.dp),
                         fontWeight = FontWeight.Bold
                     )
-
-                    /*if (index != currenciesRates.currenciesIsoCodes.size - 1) {
-                        Divider(
-                            color = Color.LightGray,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .width(1.dp)
-                        )
-                    }*/
                 }
             }
             RatesPagerList(
@@ -114,73 +103,6 @@ fun CurrenciesRatesTable(
             )
         }
     }
-}
-
-@Composable
-private fun YearNavigation(currentRateDate: Date, onYearChange: (date: Date) -> Unit) {
-    val currentRateDateCalendar: Calendar = Calendar.getInstance().apply { time = currentRateDate }
-    val currentRateYear = currentRateDateCalendar.get(Calendar.YEAR)
-    var currentRateYearState by rememberSaveable { mutableStateOf(currentRateYear) }
-
-    Row(
-        modifier = Modifier
-            .background(color = colorResource(id = R.color.purple_200))
-            .height(40.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        IconButton(modifier = Modifier.padding(start = 5.dp),
-            onClick = {
-                val newValue = backYear(currentRateYearState)
-                currentRateYearState = newValue
-                if (newValue != currentRateYear) {
-                    onYearChange(currentRateDateCalendar.apply {
-                        set(
-                            Calendar.YEAR,
-                            newValue
-                        )
-                    }.time)
-                }
-            }) {
-            Icon(
-                imageVector = Icons.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.cd_move_year_back)
-            )
-        }
-        Text(
-            text = "$currentRateYearState", modifier = Modifier
-                .weight(1f), textAlign = TextAlign.Center
-        )
-        IconButton(modifier = Modifier.padding(start = 5.dp),
-            onClick = {
-                val newValue = forwardYear(currentRateYearState)
-                currentRateYearState = newValue
-                if (newValue != currentRateYear) {
-                    onYearChange(currentRateDateCalendar.apply {
-                        set(
-                            Calendar.YEAR,
-                            newValue
-                        )
-                    }.time)
-                }
-            }) {
-            Icon(
-                imageVector = Icons.Filled.ArrowForward,
-                contentDescription = stringResource(R.string.cd_move_year_forward)
-            )
-        }
-    }
-}
-
-private fun backYear(currentRateYear: Int): Int {
-    return if (currentRateYear > 2000) currentRateYear - 1 else currentRateYear
-}
-
-private fun forwardYear(currentRateYear: Int): Int {
-    val currentDateCalendar = Calendar.getInstance()
-    val currentYear = currentDateCalendar.get(Calendar.YEAR)
-
-    return if (currentRateYear < currentYear) currentRateYear + 1 else currentRateYear
 }
 
 @Composable
@@ -237,10 +159,6 @@ fun RetryMessage(uiState: CurrencyRatesUiState, onRefresh: (date: Date) -> Unit)
     val errorMessageText: String = stringResource(errorMessage.messageId)
     val retryMessageText = stringResource(id = R.string.retry)
 
-    //val onRefreshRatesState by rememberUpdatedState(onRefresh)
-    //val onErrorDismissState by rememberUpdatedState(onErrorDismiss)
-
-    //LaunchedEffect(errorMessageText, retryMessageText, scaffoldState) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -260,17 +178,6 @@ fun RetryMessage(uiState: CurrencyRatesUiState, onRefresh: (date: Date) -> Unit)
         ) {
             Text(text = retryMessageText)
         }
-        //        }
-
-        /*val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
-            message = errorMessageText,
-            actionLabel = retryMessageText
-        )
-        if (snackbarResult == SnackbarResult.ActionPerformed) {
-            onRefresh(Date())
-        }*/
-
-        //onErrorDismissState(errorMessage.id)
     }
 }
 
@@ -337,14 +244,6 @@ private fun RatesPagerList(
                                     .background(if (index % 2 == 0) MaterialTheme.colors.rateRowColor else Color.Transparent)
                                     .padding(vertical = 4.dp)
                             )
-                            /*if (index != monthRate.rates.size - 1) {
-                                Divider(
-                                    color = Color.LightGray,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .width(1.dp)
-                                )
-                            }*/
                         }
                     }
                 }
@@ -388,13 +287,3 @@ private fun TopAppBar(
         elevation = elevation
     )
 }
-
-@Composable
-fun rememberContentPaddingForScreen(additionalTop: Dp = 0.dp) =
-    rememberInsetsPaddingValues(
-        insets = LocalWindowInsets.current.systemBars,
-        applyTop = false,
-        applyEnd = false,
-        applyStart = false,
-        additionalTop = additionalTop
-    )

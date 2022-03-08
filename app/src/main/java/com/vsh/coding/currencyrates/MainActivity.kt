@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CurrencyRatesTheme {
                 ProvideWindowInsets {
-                    CurrencyRatesNavGraph(referencesLocator = appRefLocator)
+                    CurrencyRatesNavGraph(context = this, referencesLocator = appRefLocator)
                 }
             }
         }

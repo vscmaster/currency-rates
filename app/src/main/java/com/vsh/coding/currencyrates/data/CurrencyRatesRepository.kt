@@ -11,6 +11,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 private const val API_DATE_FORMAT = "yyyy-MM-dd"
 private const val API_DATE_FORMAT_SUFFIX = ".json"
+private const val TAG = "CurrencyRatesRepository"
+
 
 class CurrencyRatesRepository(private val currencyService: CurrencyService) : CurrencyRepository {
 
@@ -29,16 +31,22 @@ class CurrencyRatesRepository(private val currencyService: CurrencyService) : Cu
                 set(Calendar.DAY_OF_MONTH, 1)
             }
             val monthsCount = monthsCountOfYear(requestDate)
-            for (i in 0 until monthsCount) {
-                requestDate.set(Calendar.MONTH, i)
+            withContext(Dispatchers.IO) {
+                for (i in 0 until monthsCount) {
+                    val requestMonth: Calendar = Calendar.getInstance().apply {
+                        time = requestDate.time
+                        requestDate.set(Calendar.MONTH, i)
+                    }
 
-                withContext(Dispatchers.IO) {
-                    val dateFormatParameter = apiDateFormat.format(requestDate.time)
-                    val dateString = dateFormatParameter + API_DATE_FORMAT_SUFFIX
-                    delay((500L..1000L).random())
-                    val result: Rates =
-                        currencyService.getRatesOfDate(dateString)
-                    ratesQueue.add(result)
+                    launch {
+                        val dateFormatParameter = apiDateFormat.format(requestMonth.time)
+                        val dateString = dateFormatParameter + API_DATE_FORMAT_SUFFIX
+                        delay((1000L..2000L).random())
+                        val result: Rates =
+                            currencyService.getRatesOfDate(dateString)
+                        Log.d(TAG, "Thread: ${Thread.currentThread().name} has finished!")
+                        ratesQueue.add(result)
+                    }
                 }
             }
         }

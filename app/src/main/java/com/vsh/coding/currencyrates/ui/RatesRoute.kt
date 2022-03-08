@@ -1,5 +1,6 @@
 package com.vsh.coding.currencyrates.ui
 
+import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ScaffoldState
@@ -12,6 +13,7 @@ import com.vsh.coding.currencyrates.CurrencyRatesViewModel
 
 @Composable
 fun RatesRoute(
+    context: Context,
     currencyRatesViewModel: CurrencyRatesViewModel,
     scaffoldState: ScaffoldState = rememberScaffoldState(),
 ) {
@@ -19,6 +21,7 @@ fun RatesRoute(
     val uiState by currencyRatesViewModel.uiState.collectAsState()
     val isShowAppBar = doesNeedShowAppBar()
     CurrencyRateScreen(
+        context = context,
         uiState = uiState,
         showTopAppBar = isShowAppBar,
         scaffoldState = scaffoldState,
